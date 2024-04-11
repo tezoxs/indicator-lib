@@ -4,7 +4,7 @@
   "main": "src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc",
+    "build": "npx tsup --dts",
     "lint": "eslint . --ext .ts"
   },
   "keywords": [],
@@ -21,11 +21,13 @@
     "eslint-plugin-n": "^16.6.2",
     "eslint-plugin-promise": "^6.1.1",
     "globals": "^15.0.0",
+    "tsup": "^8.0.2",
     "typescript": "^5.4.4",
     "typescript-eslint": "^7.6.0"
   },
   "dependencies": {
     "bignumber.js": "^9.1.2",
+    "dotenv": "^16.4.5",
     "technicalindicators": "^3.1.0"
   }
 }

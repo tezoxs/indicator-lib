@@ -25,10 +25,10 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 16.x
-          registry-url: 'https://npm.pkg.github.com'
-          scope: '@vitoraguila'
+          registry-url: "https://npm.pkg.github.com"
+          scope: "@vitoraguila"
 
-      - name: Create release branch 
+      - name: Create release branch
         run: |
           git checkout -b release/${{env.RELEASE_VERSION}}
 
