@@ -1,3 +1,3 @@
 # indicator-lib
 
-test
+v1.0.1
