@@ -1,7 +1,10 @@
 {
-  "name": "indicator",
+  "name": "@tezoxs/indicator",
   "version": "1.3.1",
   "main": "src/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "npx tsup --dts",
@@ -9,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tezoxs/indicator-lib"
+    "url": "git+https://github.com/tezoxs/indicator-lib.git"
   },
   "keywords": [],
   "author": "",
