@@ -33,7 +33,7 @@ jobs:
           git checkout -b release/${{env.RELEASE_VERSION}}
 
       - name: Install dependencies
-        run: yarn && yarn version && yarn install
+        run: yarn && yarn install
 
       - name: Build
         run: yarn build
