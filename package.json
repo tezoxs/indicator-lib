@@ -1,6 +1,5 @@
 {
   "name": "@tezoxs/indicator-lib",
-  "version": "1.22.22",
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
