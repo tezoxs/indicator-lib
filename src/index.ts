@@ -1,1 +1,2 @@
-export { Creator } from "./creator";
+import { Indicator } from "./creator";
+export default Indicator;
