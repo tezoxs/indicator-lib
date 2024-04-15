@@ -10,8 +10,8 @@ import TrailingSignal from "indicators/trailing/signal";
 import { EIndicatorType } from "common/enum/indicator.enum";
 import BaseIndicator from "indicators/base-indicator";
 
-export class Creator {
-  static getIndicatorInstance(config: any) {
+export class Indicator {
+  static getInstance(config: any): BaseIndicator<any> {
     switch (config.type) {
       case EIndicatorType.Trailing:
         return new TrailingSignal(config);
