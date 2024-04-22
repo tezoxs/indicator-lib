@@ -9,5 +9,5 @@ export default defineConfig({
   format: ["esm", "cjs"],
   esbuildPlugins: [],
   dts: "src/index.ts",
-  target: "es2021",
+  target: "node18",
 });
