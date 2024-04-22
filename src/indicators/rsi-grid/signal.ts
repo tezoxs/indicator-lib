@@ -13,7 +13,8 @@ import BaseIndicator from "indicators/base-indicator";
 import { RSIGridConfig } from "./type";
 import { Kline } from "common/types/kline.type";
 
-export default class RSIGrid extends BaseIndicator<RSIGridConfig> {
+export default class RSIGrid extends BaseIndicator {
+  protected config: RSIGridConfig;
   private rsiInstance: RSI;
   private startZone: number;
   private valueOfZone: number;

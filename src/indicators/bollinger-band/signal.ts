@@ -14,7 +14,8 @@ import BaseIndicator from "indicators/base-indicator";
 import { BollingerBandConfig, PrePositionState } from "./type";
 import { Kline } from "common/types/kline.type";
 
-export default class BollingerBand extends BaseIndicator<BollingerBandConfig> {
+export default class BollingerBand extends BaseIndicator {
+  protected config: BollingerBandConfig;
   private bbInstance: BollingerBands;
   private currentBBValue: BollingerBandsOutput;
   private waitingSide: EPositionSide;

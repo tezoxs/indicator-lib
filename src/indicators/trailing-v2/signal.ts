@@ -16,11 +16,8 @@ import { StringNum } from "common/types/common.type";
 import { ClosingSignal, TrailingOpenSignal, TrailingV2Config } from "./type";
 import { Kline } from "common/types/kline.type";
 
-export type a = {
-  i: string;
-};
-
-export default class TrailingSignalV2 extends BaseIndicator<TrailingV2Config> {
+export default class TrailingSignalV2 extends BaseIndicator {
+  protected config: TrailingV2Config;
   private mainRfInstance: RangeFilter;
   private subRfInstance: RangeFilter;
   private cfbInstance: CFB;

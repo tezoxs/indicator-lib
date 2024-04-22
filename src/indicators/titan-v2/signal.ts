@@ -16,7 +16,8 @@ import { SignalResult } from "common/types/common.type";
 import BaseIndicator from "../base-indicator";
 import { TitanV2Config, TitanV2OpenSignal } from "./type";
 
-export default class TitanV2 extends BaseIndicator<TitanV2Config> {
+export default class TitanV2 extends BaseIndicator {
+  protected config: TitanV2Config;
   private cfbInstance: CFB;
   private rfInstance: RangeFilter;
   private trailingInstance: Trailing;

@@ -18,7 +18,8 @@ import { isIntersection } from "common/utils/bar.util";
 import BaseIndicator from "indicators/base-indicator";
 import { RangeFilterDCAConfig, RangeFilterDCASignalResult } from "./type";
 
-export default class RangeFilterDCASignal extends BaseIndicator<RangeFilterDCAConfig> {
+export default class RangeFilterDCASignal extends BaseIndicator {
+  protected config: RangeFilterDCAConfig;
   private kdjInstance: KDJ;
   private rfInstance: RangeFilter;
   private cfbInstance: CFB;
