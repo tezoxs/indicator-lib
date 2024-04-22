@@ -12,8 +12,8 @@ import BaseIndicator from "indicators/base-indicator";
 import { RSIDivergenceAdvancedConfig } from "./type";
 import { Kline } from "common/types/kline.type";
 
-
-export default class RSIDivergenceAdvancedSignal extends BaseIndicator<RSIDivergenceAdvancedConfig> {
+export default class RSIDivergenceAdvancedSignal extends BaseIndicator {
+  protected config: RSIDivergenceAdvancedConfig;
   private rsiDivergenceInstance: RSIDivergence;
   private previousPositionSide: EPositionSide;
   private signalZoneId = 0;

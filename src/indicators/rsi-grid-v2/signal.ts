@@ -14,7 +14,8 @@ import BigNumber from "bignumber.js";
 import { isValueInRange } from "common/utils/util";
 import { StringNum } from "common/types/common.type";
 
-export default class RSIGridV2 extends BaseIndicator<RSIGridV2Config> {
+export default class RSIGridV2 extends BaseIndicator {
+  protected config: RSIGridV2Config;
   private rsiInstance: RSI;
   private valueOfZone: number;
   private overBoughtZone: number;

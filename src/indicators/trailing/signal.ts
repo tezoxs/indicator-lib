@@ -17,7 +17,8 @@ import { TrailingOpenSignal, ClosingSignal } from "indicators/trailing-v2/type";
 import { TrailingConfig } from "./type";
 import { Kline } from "common/types/kline.type";
 
-export default class TrailingSignal extends BaseIndicator<TrailingConfig> {
+export default class TrailingSignal extends BaseIndicator {
+  protected config: TrailingConfig;
   private rfInstance: RangeFilter;
   private cfbInstance: CFB;
   private mainTrailingInstance: Trailing;

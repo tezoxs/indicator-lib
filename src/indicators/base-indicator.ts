@@ -1,9 +1,9 @@
 import { Kline } from "../common/types/kline.type";
 import { SignalResult } from "../common/types/common.type";
 
-export default abstract class BaseIndicator<T> {
-  protected config: T;
-  constructor(config: T) {
+export default abstract class BaseIndicator {
+  protected config: any;
+  constructor(config: any) {
     this.config = config;
   }
 
