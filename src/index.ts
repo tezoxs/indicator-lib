@@ -1,4 +1,4 @@
-import { Indicator } from "./creator";
+export { Indicator } from "./creator";
 import BaseIndicator from "../src/indicators/base-indicator";
 
-export { BaseIndicator, Indicator };
+export { BaseIndicator };
