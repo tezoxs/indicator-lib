@@ -4,6 +4,7 @@ import { BollingerBandsOutput } from "technicalindicators/declarations/volatilit
 import {
   EBollingerBandIndicatorMode,
   EBollingerBandPriceSignalMode,
+  EEntryAmountType,
   EIndicatorType,
   EPositionSide,
   ESignalType,
@@ -12,7 +13,9 @@ import { SignalResult } from "common/types/common.type";
 import { isPriceInRange } from "common/utils/bar.util";
 import BaseIndicator from "indicators/base-indicator";
 import { BollingerBandConfig, PrePositionState } from "./type";
-import { Kline } from "common/types/kline.type";
+import { Kline, PriceKline } from "common/types/kline.type";
+import { ExchangeSignal } from "common/types/signal";
+import { ExchangeSignalType } from "common/enum/exchange.enum";
 
 export default class BollingerBand extends BaseIndicator {
   protected config: BollingerBandConfig;
@@ -31,12 +34,31 @@ export default class BollingerBand extends BaseIndicator {
     this.previousPosition = {} as PrePositionState;
   }
 
-  nextSignal(bar: Kline, isIntervalBar: boolean) {
-    if (isIntervalBar) {
+  nextSignal(bar: Kline, signalType = ExchangeSignalType.Kline) {
+    if (signalType === ExchangeSignalType.Kline) {
       return this._nextIntervalSignal(bar);
     }
 
     return this._nextTickerSignal(bar);
+  }
+
+  handleExchangeSignal(exchangeSignal: ExchangeSignal) {
+    if (
+      [ExchangeSignalType.Kline, ExchangeSignalType.Price].lastIndexOf(exchangeSignal.type) !== -1
+    ) {
+      const signals = this.nextSignal(exchangeSignal.data as PriceKline, exchangeSignal.type);
+
+      //Cear wating side if signal is valid
+      if (signals.length > 0) {
+        this.waitingSide = undefined;
+      }
+
+      if (exchangeSignal.type == ExchangeSignalType.Price && !signals.length) {
+        return;
+      }
+
+      this.emit("newSignalTriggered", signals, exchangeSignal.type);
+    }
   }
 
   private _nextIntervalSignal(kline: Kline) {
@@ -216,6 +238,10 @@ export default class BollingerBand extends BaseIndicator {
       return [];
     }
 
+    if (this.config.oneWaySignal && parsedPositionSide != this.config.oneWaySignalSide) {
+      return [];
+    }
+
     if (this.config.isSeparateMode && parsedPositionSide != this.config.separateSide) {
       return [];
     }
@@ -224,7 +250,7 @@ export default class BollingerBand extends BaseIndicator {
   }
 
   private _formatSignal(positionSide: EPositionSide, price: string): SignalResult[] {
-    const signalConfig = {
+    const signalConfig: any = {
       amountType: this.config.amountType,
       takeProfitRate: this.config.takeProfitRate,
       stopLossRate: this.config.stopLossRate,
@@ -233,12 +259,16 @@ export default class BollingerBand extends BaseIndicator {
       maximumReEntry: this.config.maximumReEntry,
       leverage: this.config.leverage,
       signalOrderEntry: this.config.signalOrderEntry,
-      reEntrySettings: this.config.reEntrySettings,
+      reEntrySetting: this.config.reEntrySetting,
       contractValue: this.config.contractValue,
       pricePrecision: this.config.pricePrecision,
       quantityPrecision: this.config.quantityPrecision,
       dcaStopLossRate: this.config.dcaStopLossRate,
     };
+
+    if (this.config.amountType == EEntryAmountType.Rate) {
+      signalConfig.amountRate = this.config.amountRate;
+    }
 
     this.waitingSide = undefined;
 
@@ -249,12 +279,15 @@ export default class BollingerBand extends BaseIndicator {
         exchange: this.config.exchange,
         positionSide,
         signalId: this.config.signalId,
+        baseSymbol: this.config.baseSymbol,
         price,
         signalConfig: {
           ...signalConfig,
           leverage: this.config.leverage,
-          entryAmount: this.config.amountValue,
+          entryAmount: this.config.amountRate,
           indicator: EIndicatorType.BollingerBand,
+          entryOrderType: this.config.entryOrderType,
+          closeOrderType: this.config.closeOrderType,
         },
       },
     ];

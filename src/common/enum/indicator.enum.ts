@@ -9,19 +9,18 @@ export enum EGridTrendType {
 }
 
 export enum EIndicatorType {
-  Grid = "grid",
-  GridTrailing = "gridTrailing",
-  Trailing = "trailing",
-  Trailingv2 = "trailingv2",
-  Titan = "titan",
-  Titanv2 = "titanv2",
-  RangeFilterDca = "rangeFilterDca",
-  BollingerBand = "bollingerBand",
-  RsiDivergence = "rsiDivergence",
-  RsiDivergenceAdvanced = "rsiDivergenceAdvanced",
   RsiGrid = "rsiBasedFlexibleGrid",
   RsiGridV2 = "rsiBasedFlexibleGridV2",
-  RsiBasedFlexibleGrid = "RsiBasedFlexibleGrid",
+
+  Trailing = "trailing",
+  TrailingV2 = "trailing_v2",
+  TitanV2 = "titan_v2",
+  RangeFilterDCA = "range_filter_dca",
+  RSIDivergence = "rsi_divergence",
+  RSIDivergenceAdvanced = "rsi_divergence_advanced",
+  Copytrade = "copytrade",
+  BollingerBand = "bollinger_band",
+  RSISingle = "rsi_single",
 }
 
 export enum EntryStatusEnum {
@@ -32,8 +31,9 @@ export enum EntryStatusEnum {
 }
 
 export enum EPositionSide {
-  Long = "long",
-  Short = "short",
+  Long = "LONG",
+  Short = "SHORT",
+  All = "ALL",
 }
 
 export enum EEntryAmountType {
@@ -44,6 +44,7 @@ export enum EEntryAmountType {
 export enum ETPSLMode {
   Fixed = "fixed",
   Normal = "normal",
+  Both = "both",
 }
 
 export enum EBacktradeType {

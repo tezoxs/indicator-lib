@@ -9,6 +9,10 @@ export type Kline = {
   closeTime: number;
   spreadRate?: string;
   isInitBar?: boolean;
+  // new
+  interval: string;
+  baseVolume: string;
+  quoteVolume: string;
 };
 
 export type Price = {
@@ -51,3 +55,5 @@ export type KlineSource =
   | "baseVolume"
   | "quoteVolume"
   | "spreadRate";
+
+export type PriceKline = Kline & Price;

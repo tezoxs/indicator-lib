@@ -15,6 +15,8 @@ import { SignalResult } from "common/types/common.type";
 
 import BaseIndicator from "../base-indicator";
 import { TitanV2Config, TitanV2OpenSignal } from "./type";
+import { ExchangeSignal } from "common/types/signal";
+import { ExchangeSignalType } from "common/enum/exchange.enum";
 
 export default class TitanV2 extends BaseIndicator {
   protected config: TitanV2Config;
@@ -54,6 +56,14 @@ export default class TitanV2 extends BaseIndicator {
     this.previousCFB = cfbValue;
 
     return signals;
+  }
+
+  handleExchangeSignal(exchangeSignal: ExchangeSignal) {
+    if (exchangeSignal.type == ExchangeSignalType.Kline) {
+      const signals = this.nextSignal(exchangeSignal.data as Kline);
+
+      this.emit("newSignalTriggered", signals);
+    }
   }
 
   private _nextEntrySignal(
@@ -179,9 +189,9 @@ export default class TitanV2 extends BaseIndicator {
       quantityPrecision,
       pricePrecision,
       multipleEntry,
-      isOneWayMode,
+      oneWaySignal,
       oneWaySignalSide,
-      entryAmountType,
+      amountType,
       strictMode,
       tpslMode,
       maximumEntry,
@@ -190,15 +200,18 @@ export default class TitanV2 extends BaseIndicator {
       exchange,
       symbol,
       signalId,
+      entryOrderType,
+      closeOrderType,
+      baseSymbol,
     } = this.config;
 
-    if (isOneWayMode && entrySignal.positionSide !== oneWaySignalSide) {
+    if (oneWaySignal && entrySignal.positionSide !== oneWaySignalSide) {
       return [];
     }
 
     const signalConfig = {
       leverage,
-      indicator: EIndicatorType.Titanv2,
+      indicator: EIndicatorType.TitanV2,
       contractValue,
       quantityPrecision,
       pricePrecision,
@@ -206,7 +219,9 @@ export default class TitanV2 extends BaseIndicator {
       strictMode,
       tpslMode,
       multipleCase,
-      amountType: entryAmountType,
+      amountType,
+      entryOrderType,
+      closeOrderType,
     };
 
     if (this.config.tpslMode !== ETPSLMode.Normal) {
@@ -227,11 +242,13 @@ export default class TitanV2 extends BaseIndicator {
         symbol: symbol,
         positionSide,
         signalId,
-        price: entrySignal.price,
+        baseSymbol,
+        price: this.getSignalPrice(ESignalType.Entry, entrySignal.price, positionSide),
         signalConfig: {
           ...signalConfig,
           caseNumber,
           entryAmount: this._getEntryAmount(positionSide, caseNumber),
+          amountRate: this._getAmountRate(positionSide, caseNumber),
         },
       });
     }
@@ -244,40 +261,52 @@ export default class TitanV2 extends BaseIndicator {
       return;
     }
 
+    const { entryOrderType, closeOrderType } = this.config;
+
     return {
       type: ESignalType.Close,
       symbol: this.config.symbol,
       exchange: this.config.exchange,
       positionSide: positionSide,
-      price,
+      price: this.getSignalPrice(ESignalType.Close, price, positionSide),
       signalId: this.config.signalId,
       signalScale: CLOSING_SCALE_ALL,
       signalConfig: {
         leverage: this.config.leverage,
-        indicator: EIndicatorType.Titanv2,
+        indicator: EIndicatorType.TitanV2,
+        entryOrderType,
+        closeOrderType,
       },
     } as SignalResult;
   }
 
   private _getEntryAmount(side: EPositionSide, caseNumber: number) {
-    const {
-      longEntryAmountRate,
-      shortEntryAmountRate,
-      longEntryAmount,
-      shortEntryAmount,
-      entryAmountType,
-    } = this.config;
+    const { longAmountRates, shortAmountRates, longEntryAmount, shortEntryAmount, amountType } =
+      this.config;
 
-    if (entryAmountType === EEntryAmountType.Fixed) {
+    if (amountType === EEntryAmountType.Fixed) {
       const entryAmount = side === EPositionSide.Long ? longEntryAmount : shortEntryAmount;
 
       return entryAmount[caseNumber - 1];
     }
 
-    const entryAmountRate =
-      side === EPositionSide.Short ? longEntryAmountRate : shortEntryAmountRate;
+    const amountRate = side === EPositionSide.Short ? longAmountRates : shortAmountRates;
 
-    return entryAmountRate[caseNumber - 1];
+    return amountRate[caseNumber - 1];
+  }
+
+  private _getAmountRate(positionSide: EPositionSide, caseNumber: number) {
+    if (this.config.amountType == EEntryAmountType.Fixed) {
+      return;
+    }
+
+    let amountRates = this.config.longAmountRates;
+
+    if (positionSide == EPositionSide.Short) {
+      amountRates = this.config.shortAmountRates;
+    }
+
+    return amountRates[caseNumber - 1];
   }
 
   private _initIndicatorInstances() {

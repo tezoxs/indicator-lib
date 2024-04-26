@@ -57,10 +57,10 @@ export default class RSIGrid extends BaseIndicator {
       leverage: this.config.leverage,
       maximumEntry: Infinity,
       maximumDca: 1,
-      amountType: this.config.entryAmountType,
+      amountType: this.config.amountType,
       entryAmount:
-        this.config.entryAmountType === EEntryAmountType.Rate
-          ? this.config.entryAmountRate
+        this.config.amountType === EEntryAmountType.Rate
+          ? this.config.amountRate
           : this.config.entryAmount,
       pricePrecision: this.config.pricePrecision,
       quantityPrecision: this.config.quantityPrecision,

@@ -1,7 +1,7 @@
 import BigNumber from "bignumber.js";
 import { SOURCE_OPEN } from "common/constants/exchange.constant";
 import { CLOSE_BY_SIGNAL, CLOSING_SCALE_ALL } from "common/constants/signal.constant";
-import { EOpenningSignalType } from "common/enum/exchange.enum";
+import { EOpeningSignalType, ExchangeSignalType } from "common/enum/exchange.enum";
 import {
   EEntryAmountType,
   EIndicatorType,
@@ -17,6 +17,7 @@ import { Kline } from "common/types/kline.type";
 import { isIntersection } from "common/utils/bar.util";
 import BaseIndicator from "indicators/base-indicator";
 import { RangeFilterDCAConfig, RangeFilterDCASignalResult } from "./type";
+import { ExchangeSignal } from "common/types/signal";
 
 export default class RangeFilterDCASignal extends BaseIndicator {
   protected config: RangeFilterDCAConfig;
@@ -42,6 +43,7 @@ export default class RangeFilterDCASignal extends BaseIndicator {
     const kdjValue = this.kdjInstance.nextValue(bar);
     const rfValue = this.rfInstance.nextValue(bar);
     const cfbValue = this.cfbInstance.nextValue(bar);
+
     const mainSignal = this._nextMainSignal(bar, rfValue, cfbValue) as SignalResult;
     const subSignal = this._nextSubSignal(bar, rfValue, kdjValue);
     const closingSignal = this._nextClosingSignal(mainSignal);
@@ -66,6 +68,14 @@ export default class RangeFilterDCASignal extends BaseIndicator {
     return signals;
   }
 
+  handleExchangeSignal(exchangeSignal: ExchangeSignal) {
+    if (exchangeSignal.type == ExchangeSignalType.Kline) {
+      const signals = this.nextSignal(exchangeSignal.data as Kline);
+
+      this.emit("newSignalTriggered", signals);
+    }
+  }
+
   private _nextMainSignal(bar: Kline, rfValue: RangeFilterResult, cfbValue: CFBResult) {
     const currentRFFilter = rfValue.filter;
     const currentCFBFilter = cfbValue.filter;
@@ -79,7 +89,7 @@ export default class RangeFilterDCASignal extends BaseIndicator {
     const signal: RangeFilterDCASignalResult = {
       positionSide: null,
       price: "0",
-      type: EOpenningSignalType.Main,
+      type: EOpeningSignalType.Main,
     };
 
     signal.positionSide =
@@ -107,7 +117,7 @@ export default class RangeFilterDCASignal extends BaseIndicator {
     const signal: RangeFilterDCASignalResult = {
       positionSide: null,
       price: "0",
-      type: EOpenningSignalType.Sub,
+      type: EOpeningSignalType.Sub,
     };
 
     if (
@@ -134,27 +144,32 @@ export default class RangeFilterDCASignal extends BaseIndicator {
     const positionSide =
       mainSignal.positionSide == EPositionSide.Long ? EPositionSide.Short : EPositionSide.Long;
 
+    const { entryOrderType, closeOrderType, baseSymbol } = this.config;
+
     return {
       type: ESignalType.Close,
       symbol: this.config.symbol,
       exchange: this.config.exchange,
       positionSide,
-      price: mainSignal.price,
+      price: this.getSignalPrice(ESignalType.Close, mainSignal.price, positionSide),
       signalId: this.config.signalId,
       signalScale: CLOSING_SCALE_ALL,
       signalConfig: {
         leverage: this.config.leverage,
-        indicator: EIndicatorType.RangeFilterDca,
+        indicator: EIndicatorType.RangeFilterDCA,
         contractValue: this.config.contractValue,
         quantityPrecision: this.config.quantityPrecision,
         pricePrecision: this.config.pricePrecision,
         closeReason: CLOSE_BY_SIGNAL,
+        entryOrderType,
+        closeOrderType,
+        baseSymbol,
       },
     };
   }
 
   private _validateOneWayMode(positionSide: EPositionSide) {
-    if (!this.config.isOneWayMode) {
+    if (!this.config.oneWaySignal) {
       return true;
     }
 
@@ -184,7 +199,7 @@ export default class RangeFilterDCASignal extends BaseIndicator {
     }
 
     const signalConfig: any = {
-      indicator: EIndicatorType.RangeFilterDca,
+      indicator: EIndicatorType.RangeFilterDCA,
       type: signal.type,
       leverage: this.config.leverage,
       tpslMode: this.config.tpslMode,
@@ -194,17 +209,23 @@ export default class RangeFilterDCASignal extends BaseIndicator {
       contractValue: this.config.contractValue,
       quantityPrecision: this.config.quantityPrecision,
       pricePrecision: this.config.pricePrecision,
-      amountType: this.config.entryAmountType,
+      amountType: this.config.amountType,
       entryAmount:
-        this.config.entryAmountType === EEntryAmountType.Rate
-          ? this.config.entryAmountRate
+        this.config.amountType === EEntryAmountType.Rate
+          ? this.config.amountRate
           : this.config.entryAmount,
       gapDcaPriceRate: this.config.gapDcaPriceRate,
       multipleMainOrder: this.config.multipleMainOrder,
       enableMaximumOrderInRange: this.config.enableMaximumOrderInRange,
       rangeMaximumOrderRate: this.config.rangeMaximumOrderRate,
       maximumOrderInRange: this.config.maximumOrderInRange,
+      entryOrderType: this.config.entryOrderType,
+      closeOrderType: this.config.closeOrderType,
     };
+
+    if (this.config.amountType == EEntryAmountType.Rate) {
+      signalConfig.amountRate = this.config.amountRate;
+    }
 
     if (this.config.tpslMode != ETPSLMode.Normal) {
       signalConfig.takeProfitRate = this.config.takeProfitRate;
@@ -216,8 +237,9 @@ export default class RangeFilterDCASignal extends BaseIndicator {
       type: ESignalType.Entry,
       symbol: this.config.symbol,
       exchange: this.config.exchange,
+      baseSymbol: this.config.baseSymbol,
       positionSide,
-      price: signal.price,
+      price: this.getSignalPrice(ESignalType.Entry, signal.price, signal.positionSide),
       signalId: this.config.signalId,
       signalConfig,
     };
