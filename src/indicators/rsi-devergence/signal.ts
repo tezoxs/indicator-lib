@@ -10,6 +10,8 @@ import { StringNum } from "common/types/common.type";
 import BaseIndicator from "indicators/base-indicator";
 import { RSIDivergenceConfig } from "./type";
 import { Kline } from "common/types/kline.type";
+import { ExchangeSignal } from "common/types/signal";
+import { ExchangeSignalType } from "common/enum/exchange.enum";
 
 export default class RSIDivergenceSignal extends BaseIndicator {
   protected config: RSIDivergenceConfig;
@@ -31,6 +33,13 @@ export default class RSIDivergenceSignal extends BaseIndicator {
       alertPeriod: Number(config.alertPeriod),
       precision: config.pricePrecision,
     });
+  }
+  handleExchangeSignal(exchangeSignal: ExchangeSignal) {
+    if (exchangeSignal.type == ExchangeSignalType.Kline) {
+      const signals = this.nextSignal(exchangeSignal.data as Kline);
+
+      this.emit("newSignalTriggered", signals);
+    }
   }
 
   nextSignal(bar: Kline) {
@@ -64,17 +73,17 @@ export default class RSIDivergenceSignal extends BaseIndicator {
 
     const positionSide = this._getPositionSide(signal.positionSide);
     const signalConfig: any = {
-      indicator: EIndicatorType.RsiDivergence,
+      indicator: EIndicatorType.RSIDivergence,
       leverage: this.config.leverage,
-      reEntrySettings: this.config.reEntrySettings,
+      reEntrySetting: this.config.reEntrySetting,
       takeProfitRate: this.config.takeProfitRate,
       stopLossRate: this.config.stopLossRate,
-      maximumEntry: 1,
-      amountType: this.config.entryAmountType,
+      maximumEntry: this.config.maximumEntry || 1,
+      amountType: this.config.amountType,
       signalZoneId: this.signalZoneId,
       entryAmount:
-        this.config.entryAmountType === EEntryAmountType.Rate
-          ? this.config.entryAmountRate
+        this.config.amountType === EEntryAmountType.Rate
+          ? this.config.amountRate
           : this.config.entryAmount,
       maximumReEntry: this.config.maximumReEntry,
       trailingStartRate: this.config.trailingStartRate,
@@ -83,15 +92,22 @@ export default class RSIDivergenceSignal extends BaseIndicator {
       pricePrecision: this.config.pricePrecision,
       quantityPrecision: this.config.quantityPrecision,
       contractValue: this.config.contractValue,
+      entryOrderType: this.config.entryOrderType,
+      closeOrderType: this.config.closeOrderType,
     };
+
+    if (this.config.amountType == EEntryAmountType.Rate) {
+      signalConfig.amountRate = this.config.amountRate;
+    }
 
     return [
       {
         type: ESignalType.Entry,
         symbol: this.config.symbol,
+        baseSymbol: this.config.baseSymbol,
         exchange: this.config.exchange,
         positionSide,
-        price: signal.price,
+        price: this.getSignalPrice(ESignalType.Entry, signal.price, positionSide),
         signalId: this.config.signalId,
         signalConfig,
       },

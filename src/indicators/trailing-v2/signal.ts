@@ -15,6 +15,7 @@ import Trailing from "common/indicator-lib/trailing";
 import { StringNum } from "common/types/common.type";
 import { ClosingSignal, TrailingOpenSignal, TrailingV2Config } from "./type";
 import { Kline } from "common/types/kline.type";
+import { ExchangeSignal } from "common/types/signal";
 
 export default class TrailingSignalV2 extends BaseIndicator {
   protected config: TrailingV2Config;
@@ -38,6 +39,11 @@ export default class TrailingSignalV2 extends BaseIndicator {
     this.previousCFB = {} as CFBResult;
   }
 
+  handleExchangeSignal(exchangeSignal: ExchangeSignal) {
+    const signals = this.nextSignal(exchangeSignal.data as Kline);
+
+    this.emit("newSignalTriggered", signals);
+  }
   nextSignal(bar: Kline) {
     const subRfValue = this.subRfInstance.nextValue(bar);
     const mainRfValue = this.mainRfInstance.nextValue(bar);
@@ -303,7 +309,7 @@ export default class TrailingSignalV2 extends BaseIndicator {
 
   private _formatEntrySignal(signal: TrailingOpenSignal) {
     const signals = [];
-    const { isOneWayMode, oneWaySignalSide, reverse } = this.config;
+    const { oneWaySignal, oneWaySignalSide, reverse } = this.config;
 
     let positionSide = signal.positionSide;
 
@@ -311,13 +317,13 @@ export default class TrailingSignalV2 extends BaseIndicator {
       positionSide = positionSide === EPositionSide.Long ? EPositionSide.Short : EPositionSide.Long;
     }
 
-    if (isOneWayMode && signal.positionSide !== oneWaySignalSide) {
+    if (oneWaySignal && signal.positionSide !== oneWaySignalSide) {
       return [];
     }
 
     const signalConfig: any = {
       leverage: this.config.leverage,
-      indicator: EIndicatorType.Trailingv2,
+      indicator: EIndicatorType.TrailingV2,
       contractValue: this.config.contractValue,
       quantityPrecision: this.config.quantityPrecision,
       pricePrecision: this.config.pricePrecision,
@@ -348,7 +354,7 @@ export default class TrailingSignalV2 extends BaseIndicator {
         signalConfig: {
           ...signalConfig,
           caseNumber,
-          amountType: this.config.entryAmountType,
+          amountType: this.config.amountType,
           entryAmount: this._getEntryAmount(positionSide, caseNumber),
         },
       });
@@ -372,7 +378,7 @@ export default class TrailingSignalV2 extends BaseIndicator {
       signalScale: CLOSING_SCALE_ALL,
       signalConfig: {
         leverage: this.config.leverage,
-        indicator: EIndicatorType.Trailingv2,
+        indicator: EIndicatorType.TrailingV2,
         contractValue: this.config.contractValue,
         quantityPrecision: this.config.quantityPrecision,
         pricePrecision: this.config.pricePrecision,
@@ -387,19 +393,18 @@ export default class TrailingSignalV2 extends BaseIndicator {
       shortEntryAmountRate,
       longEntryAmount,
       shortEntryAmount,
-      entryAmountType,
+      amountType,
     } = this.config;
 
-    if (entryAmountType === EEntryAmountType.Fixed) {
+    if (amountType === EEntryAmountType.Fixed) {
       const entryAmount = side === EPositionSide.Long ? longEntryAmount : shortEntryAmount;
 
       return entryAmount[caseNumber - 1];
     }
 
-    const entryAmountRate =
-      side === EPositionSide.Short ? longEntryAmountRate : shortEntryAmountRate;
+    const amountRate = side === EPositionSide.Short ? longEntryAmountRate : shortEntryAmountRate;
 
-    return entryAmountRate[caseNumber - 1];
+    return amountRate[caseNumber - 1];
   }
 
   private _initIndicatorInstances() {

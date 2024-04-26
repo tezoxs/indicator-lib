@@ -1,6 +1,6 @@
 import BigNumber from "bignumber.js";
 import { CLOSING_SCALE_ALL, TRAILING_CLOSING_TYPE } from "common/constants/signal.constant";
-import { EExchange } from "common/enum/exchange.enum";
+import { EExchange, ExchangeSignalType } from "common/enum/exchange.enum";
 import {
   EEntryAmountType,
   EIndicatorType,
@@ -16,6 +16,7 @@ import BaseIndicator from "indicators/base-indicator";
 import { TrailingOpenSignal, ClosingSignal } from "indicators/trailing-v2/type";
 import { TrailingConfig } from "./type";
 import { Kline } from "common/types/kline.type";
+import { ExchangeSignal } from "common/types/signal";
 
 export default class TrailingSignal extends BaseIndicator {
   protected config: TrailingConfig;
@@ -33,6 +34,14 @@ export default class TrailingSignal extends BaseIndicator {
     this._initIndicatorInstances();
     this.previousCFB = {} as CFBResult;
     this.previousRF = {} as RangeFilterResult;
+  }
+
+  async handleExchangeSignal(exchangeSignal: ExchangeSignal) {
+    if (exchangeSignal.type == ExchangeSignalType.Kline) {
+      const signals = this.nextSignal(exchangeSignal.data as Kline);
+
+      this.emit("newSignalTriggered", signals);
+    }
   }
 
   nextSignal(bar: Kline) {
@@ -101,7 +110,11 @@ export default class TrailingSignal extends BaseIndicator {
     }
   }
 
-  private _nextOpeningSignal(rfValue: RangeFilterResult, cfbValue: CFBResult, bar: Kline) {
+  private _nextOpeningSignal(
+    rfValue: RangeFilterResult,
+    cfbValue: CFBResult,
+    bar: Kline
+  ): SignalResult[] {
     let signal = this._getLongSignal(rfValue, cfbValue, bar);
 
     if (!signal.caseNumbers.length) {
@@ -240,9 +253,9 @@ export default class TrailingSignal extends BaseIndicator {
     );
   }
 
-  private _formatOpeningSignal(signal: TrailingOpenSignal) {
+  private _formatOpeningSignal(signal: TrailingOpenSignal): SignalResult[] {
     const signals = [];
-    const { isOneWayMode, oneWaySignalSide, reverse } = this.config;
+    const { oneWaySignal, oneWaySignalSide, reverse } = this.config;
 
     let positionSide = signal.positionSide;
 
@@ -250,7 +263,7 @@ export default class TrailingSignal extends BaseIndicator {
       positionSide = positionSide === EPositionSide.Long ? EPositionSide.Short : EPositionSide.Long;
     }
 
-    if (isOneWayMode && signal.positionSide !== oneWaySignalSide) {
+    if (oneWaySignal && signal.positionSide !== oneWaySignalSide) {
       return [];
     }
 
@@ -277,17 +290,21 @@ export default class TrailingSignal extends BaseIndicator {
     }
 
     for (const caseNumber of validCaseNumbers) {
+      if (this.config.amountType == EEntryAmountType.Rate) {
+        signalConfig.amountRate = this._getAmountRate(signal.positionSide, caseNumber);
+      }
+
       signals.push({
         type: ESignalType.Entry,
         exchange: this.config.exchange,
         symbol: this.config.symbol,
-        positionSide,
+        baseSymbol: this.config.baseSymbol,
         signalId: this.config.signalId,
-        price: signal.price,
+        price: this.getSignalPrice(ESignalType.Entry, signal.price, positionSide),
         signalConfig: {
           ...signalConfig,
           caseNumber,
-          amountType: this.config.entryAmountType,
+          amountType: this.config.amountType,
           entryAmount: this._getEntryAmount(positionSide, caseNumber),
         },
       });
@@ -304,18 +321,22 @@ export default class TrailingSignal extends BaseIndicator {
     return {
       type: ESignalType.Close,
       symbol: this.config.symbol,
+      baseSymbol: this.config.baseSymbol,
       exchange: this.config.exchange,
       positionSide: signal.side,
-      price,
+      price: this.getSignalPrice(ESignalType.Close, price, signal.side),
       signalId: this.config.signalId,
       signalScale: CLOSING_SCALE_ALL,
       signalConfig: {
         leverage: this.config.leverage,
+        orderType: this.config.orderType,
         indicator: EIndicatorType.Trailing,
         contractValue: this.config.contractValue,
         quantityPrecision: this.config.quantityPrecision,
         pricePrecision: this.config.pricePrecision,
         closeReason: signal.reason,
+        entryOrderType: this.config.entryOrderType,
+        closeOrderType: this.config.closeOrderType,
       },
     };
   }
@@ -326,19 +347,32 @@ export default class TrailingSignal extends BaseIndicator {
       shortEntryAmountRate,
       longEntryAmount,
       shortEntryAmount,
-      entryAmountType,
+      amountType,
     } = this.config;
 
-    if (entryAmountType === EEntryAmountType.Fixed) {
+    if (amountType === EEntryAmountType.Fixed) {
       const entryAmount = side === EPositionSide.Long ? longEntryAmount : shortEntryAmount;
 
       return entryAmount[caseNumber - 1];
     }
 
-    const entryAmountRate =
-      side === EPositionSide.Short ? longEntryAmountRate : shortEntryAmountRate;
+    const amountRate = side === EPositionSide.Short ? longEntryAmountRate : shortEntryAmountRate;
 
-    return entryAmountRate[caseNumber - 1];
+    return amountRate[caseNumber - 1];
+  }
+
+  private _getAmountRate(positionSide: EPositionSide, caseNumber: number) {
+    if (this.config.amountType == EEntryAmountType.Fixed) {
+      return;
+    }
+
+    let amountRates = this.config.longAmountRates;
+
+    if (positionSide == EPositionSide.Short) {
+      amountRates = this.config.shortAmountRates;
+    }
+
+    return amountRates[caseNumber - 1];
   }
 
   private _initIndicatorInstances() {

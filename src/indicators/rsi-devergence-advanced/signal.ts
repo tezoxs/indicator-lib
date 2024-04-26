@@ -7,10 +7,12 @@ import {
   ESignalType,
 } from "common/enum/indicator.enum";
 import RSIDivergence from "common/indicator-lib/rsi-divergence";
-import { StringNum } from "common/types/common.type";
+import { SignalResult, StringNum } from "common/types/common.type";
 import BaseIndicator from "indicators/base-indicator";
 import { RSIDivergenceAdvancedConfig } from "./type";
 import { Kline } from "common/types/kline.type";
+import { ExchangeSignal } from "common/types/signal";
+import { ExchangeSignalType } from "common/enum/exchange.enum";
 
 export default class RSIDivergenceAdvancedSignal extends BaseIndicator {
   protected config: RSIDivergenceAdvancedConfig;
@@ -34,7 +36,7 @@ export default class RSIDivergenceAdvancedSignal extends BaseIndicator {
     });
   }
 
-  nextSignal(bar: Kline) {
+  nextSignal(bar: Kline): SignalResult[] {
     const { rsiValue, bull, bear } = this.rsiDivergenceInstance.nextValue(bar);
     const { longRangeFrom, longRangeTo, shortRangeFrom, shortRangeTo } = this.config;
     const signalPrice = bar.close;
@@ -64,19 +66,19 @@ export default class RSIDivergenceAdvancedSignal extends BaseIndicator {
     this.previousPositionSide = signal?.positionSide;
 
     const signalConfig: any = {
-      indicator: EIndicatorType.RsiDivergenceAdvanced,
+      indicator: EIndicatorType.RSIDivergenceAdvanced,
       leverage: this.config.leverage,
-      reEntrySettings: this.config.reEntrySettings,
+      reEntrySetting: this.config.reEntrySetting,
       reEntryStopLossCount: this.config.reEntryStopLossCount,
       takeProfitRate: this.config.maximumTakeProfitRate,
-      stopLossRate: this.config.maximumStopLossRate,
-      zoneStopLossRate: this.config.stopLossRate,
+      stopLossRate: this.config.stopLossRate,
+      zoneStopLossRate: this.config.zoneStopLossRate,
       maximumEntry: this.config.maximumEntry,
-      amountType: this.config.entryAmountType,
+      amountType: this.config.amountType,
       signalZoneId: this.signalZoneId,
       entryAmount:
-        this.config.entryAmountType === EEntryAmountType.Rate
-          ? this.config.entryAmountRate
+        this.config.amountType === EEntryAmountType.Rate
+          ? this.config.amountRate
           : this.config.entryAmount,
       maximumReEntry: this.config.maximumReEntry,
       singleZone: this.config.singleZone,
@@ -85,10 +87,13 @@ export default class RSIDivergenceAdvancedSignal extends BaseIndicator {
       pricePrecision: this.config.pricePrecision,
       quantityPrecision: this.config.quantityPrecision,
       contractValue: this.config.contractValue,
+      entryOrderType: this.config.entryOrderType,
+      closeOrderType: this.config.closeOrderType,
     };
 
     const formattedSignal = {
       symbol: this.config.symbol,
+      baseSymbol: this.config.baseSymbol,
       exchange: this.config.exchange,
       signalConfig,
       signalId: this.config.signalId,
@@ -96,21 +101,30 @@ export default class RSIDivergenceAdvancedSignal extends BaseIndicator {
     const positionSide = this._getPositionSide(signal.positionSide);
     const closeSignalPositionSide =
       positionSide === EPositionSide.Long ? EPositionSide.Short : EPositionSide.Long;
+    
     return [
       {
         type: ESignalType.Close,
         positionSide: closeSignalPositionSide,
         signalScale: CLOSING_SCALE_ALL,
-        price: signal.price,
+        price: this.getSignalPrice(ESignalType.Close, signal.price, positionSide),
         ...formattedSignal,
       },
       {
         type: ESignalType.Entry,
         positionSide,
-        price: signal.price,
+        price: this.getSignalPrice(ESignalType.Entry, signal.price, positionSide),
         ...formattedSignal,
       },
     ];
+  }
+
+  handleExchangeSignal(exchangeSignal: ExchangeSignal) {
+    if (exchangeSignal.type == ExchangeSignalType.Kline) {
+      const signals = this.nextSignal(exchangeSignal.data as Kline);
+
+      this.emit("newSignalTriggered", signals);
+    }
   }
 
   private _isValueInRange(value: StringNum, from: string, to: string) {

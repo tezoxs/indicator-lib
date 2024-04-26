@@ -15,17 +15,17 @@ export class Indicator {
     switch (config.type) {
       case EIndicatorType.Trailing:
         return new TrailingSignal(config);
-      case EIndicatorType.Trailingv2:
+      case EIndicatorType.TrailingV2:
         return new TrailingSignalV2(config);
-      case EIndicatorType.Titanv2:
+      case EIndicatorType.TitanV2:
         return new TitanV2(config);
-      case EIndicatorType.RangeFilterDca:
+      case EIndicatorType.RangeFilterDCA:
         return new RangeFilterDCA(config);
-      case EIndicatorType.RsiDivergence:
+      case EIndicatorType.RSIDivergence:
         return new RSIDivergenceSignal(config);
-      case EIndicatorType.RsiDivergenceAdvanced:
+      case EIndicatorType.RSIDivergenceAdvanced:
         return new RSIDivergenceAdvancedSignal(config);
-      case EIndicatorType.RsiBasedFlexibleGrid:
+      case EIndicatorType.RsiGrid:
         return new RSIGrid(config);
       case EIndicatorType.RsiGridV2:
         return new RSIGridV2(config);

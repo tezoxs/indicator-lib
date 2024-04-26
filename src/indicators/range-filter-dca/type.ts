@@ -1,9 +1,10 @@
-import { EOpenningSignalType } from "common/enum/exchange.enum";
+import { EOpeningSignalType, Interval } from "common/enum/exchange.enum";
 import { EEntryAmountType, EPositionSide, ETPSLMode } from "common/enum/indicator.enum";
+import { EOrderMode } from "common/enum/order.enum";
 import { KlineSource } from "common/types/kline.type";
 
 export type RangeFilterDCASignalResult = {
-  type: EOpenningSignalType;
+  type: EOpeningSignalType;
   price: string;
   positionSide: EPositionSide;
 };
@@ -27,16 +28,16 @@ export type RangeFilterDCAConfig = {
   stopLossRate?: string;
   dcaStopLossRate?: string;
   maximumEntry: string;
-  entryAmountType: EEntryAmountType;
+  amountType: EEntryAmountType;
   entryAmount: string;
-  entryAmountRate: string;
+  amountRate: string;
   gapDcaPriceRate: string;
   dcaMultipliedRates: string;
   cfbSmoothPrice?: boolean;
   onlyMainSignal?: boolean;
   reverse?: boolean;
   multipleMainOrder?: boolean;
-  isOneWayMode: boolean;
+  oneWaySignal?: boolean;
   oneWaySignalSide?: EPositionSide;
   pricePrecision: string;
   quantityPrecision: string;
@@ -45,4 +46,12 @@ export type RangeFilterDCAConfig = {
   maximumOrderInRange: string;
   rangeMaximumOrderRate: string;
   leverage: string;
+
+  // below fields used by bot process
+  entryOrderType: EOrderMode;
+  closeOrderType: EOrderMode;
+  signalExchange: string;
+  signalSymbol: string;
+  baseSymbol: string;
+  interval: Interval;
 };

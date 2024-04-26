@@ -17,9 +17,9 @@ export type RSIGridConfig = {
   longRangeTo: string;
   shortRangeFrom: string;
   shortRangeTo: string;
-  entryAmountType: EEntryAmountType;
+  amountType: EEntryAmountType;
   entryAmount: string;
-  entryAmountRate: string;
+  amountRate: string;
   reverse?: boolean;
   pricePrecision: string;
   quantityPrecision: string;

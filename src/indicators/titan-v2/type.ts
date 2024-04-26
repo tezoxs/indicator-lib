@@ -1,5 +1,8 @@
 import { KlineSource } from "common/types/kline.type";
 import { EEntryAmountType, EPositionSide, ETPSLMode } from "common/enum/indicator.enum";
+import { StringNum } from "common/types/common.type";
+import { EOrderMode } from "common/enum/order.enum";
+import { Interval } from "common/enum/exchange.enum";
 
 export type TitanV2Config = {
   signalId: number;
@@ -17,9 +20,7 @@ export type TitanV2Config = {
   trailingPeriod: string;
   maximumEntry: string;
   tpslMode: ETPSLMode;
-  entryAmountType: EEntryAmountType;
-  longEntryAmountRate: string[];
-  shortEntryAmountRate: string[];
+  amountType: EEntryAmountType;
   longEntryAmount: any;
   shortEntryAmount: any;
   pricePrecision: string;
@@ -31,8 +32,18 @@ export type TitanV2Config = {
   strictMode?: boolean;
   multipleEntry?: boolean;
   multipleCase?: boolean;
-  isOneWayMode: boolean;
+  oneWaySignal: boolean;
   oneWaySignalSide: EPositionSide;
+
+  // below fields used by bot process
+  entryOrderType: EOrderMode;
+  closeOrderType: EOrderMode;
+  signalExchange: string;
+  signalSymbol: string;
+  baseSymbol: string;
+  interval: Interval;
+  longAmountRates: StringNum[];
+  shortAmountRates: StringNum[];
 };
 
 export type TitanV2OpenSignal = {

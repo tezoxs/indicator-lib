@@ -5,6 +5,8 @@ import {
   EEntryAmountType,
   EPositionSide,
 } from "common/enum/indicator.enum";
+import { EOrderMode } from "common/enum/order.enum";
+import { StringNum } from "common/types/common.type";
 
 export type ReEntrySetting = {
   multipleAmountRate: string;
@@ -19,8 +21,8 @@ export type BollingerBandConfig = {
   signalId: number;
   exchange: EExchange;
   leverage: string;
-  reEntrySettings: ReEntrySetting[];
   symbol: string;
+  baseSymbol: string;
   signalOrderEntry: EBollingerBandIndicatorMode;
   priceSignalMode: EBollingerBandPriceSignalMode;
   barPeriod: string;
@@ -29,7 +31,6 @@ export type BollingerBandConfig = {
   stopLossRate: string;
   dcaStopLossRate?: string;
   amountType: EEntryAmountType;
-  amountValue: string;
   maximumEntry: string;
   maximumEntryMode: string;
   maximumReEntry: string;
@@ -41,4 +42,15 @@ export type BollingerBandConfig = {
   pricePrecision: string;
   quantityPrecision: string;
   contractValue: string;
+
+  // below fields used by bot process
+  entryOrderType: EOrderMode;
+  closeOrderType: EOrderMode;
+  interval: string;
+  amountRate: StringNum;
+  signalSymbol: string;
+  signalExchange: string;
+  reEntrySetting: ReEntrySetting[];
+  oneWaySignal?: boolean;
+  oneWaySignalSide?: EPositionSide;
 };

@@ -1,6 +1,7 @@
-import { EExchange } from "common/enum/exchange.enum";
+import { EExchange, Interval } from "common/enum/exchange.enum";
 import { EEntryAmountType, EPositionSide, ETPSLMode } from "common/enum/indicator.enum";
-import { KlineSource } from "common/types/kline.type";
+import { StringNum } from "common/types/common.type";
+import { Kline, KlineSource } from "common/types/kline.type";
 
 export type TrailingV2Config = {
   signalId: number;
@@ -29,7 +30,7 @@ export type TrailingV2Config = {
   takeProfitRate?: string;
   stopLossRate?: string;
   maximumEntry: string;
-  entryAmountType: EEntryAmountType;
+  amountType: EEntryAmountType;
   longEntryAmount?: string[];
   shortEntryAmount?: string[];
   cfbSmoothPrice?: boolean;
@@ -37,13 +38,30 @@ export type TrailingV2Config = {
   multipleEntry?: boolean;
   multipleCase?: boolean;
   reverse?: boolean;
-  isOneWayMode?: boolean;
+  oneWaySignal?: boolean;
   oneWaySignalSide?: EPositionSide;
   longEntryAmountRate?: string[];
   shortEntryAmountRate?: string[];
   pricePrecision: string;
   quantityPrecision: string;
   contractValue: string;
+  signalExchange: string;
+  signalSymbol: string;
+  baseSymbol: string;
+  interval: Interval;
+  mainRangeFilterConfig: RangeFilterConfig;
+  subRangeFilterConfig: RangeFilterConfig;
+  trailingMainCoefficient: StringNum;
+  trailingSubCoefficient: StringNum;
+  trailingPeriod: StringNum;
+  longAmountRates?: StringNum[];
+  shortAmountRates?: StringNum[];
+};
+
+export type RangeFilterConfig = {
+  source: KlineSource;
+  period: StringNum;
+  multiplier: StringNum;
 };
 
 export type TrailingOpenSignal = {
